@@ -1,0 +1,118 @@
+diff --git a/round2/RACFNet.py b/round2/RACFNet.py
+index a9d4f6d..6ee49da 100644
+--- a/round2/RACFNet.py
++++ b/round2/RACFNet.py
+@@ -6,2 +6,3 @@ from lib.swin_transformer import SwinTransformer
+ from lib.IIA_module import IIA
++from racfnet.modules import CCCScale, RTFScale
+ import numpy as np
+@@ -54,5 +55,11 @@ class CBAMLayer(nn.Module):
+ 
+-class Tnet(nn.Module):
+-    def __init__(self):
+-        super(Tnet, self).__init__()
++class RACFNet(nn.Module):
++    MODES = ("CCC_ONLY", "RTF_ONLY", "FULL")
++
++    def __init__(self, mode="FULL"):
++        super().__init__()
++        mode = mode.upper()
++        if mode not in self.MODES:
++            raise ValueError("mode must be one of {}".format(self.MODES))
++        self.mode = mode
+         #Mnet -- Initial Feature Extraction Subnet
+@@ -238,4 +245,11 @@ class Tnet(nn.Module):
+ 
++        if self.mode in ("CCC_ONLY", "FULL"):
++            self.ccc_scales = nn.ModuleList([CCCScale(128, 32) for _ in range(3)])
++        if self.mode in ("RTF_ONLY", "FULL"):
++            self.rtf_scales = nn.ModuleList([RTFScale(128, 32) for _ in range(3)])
++        if self.mode == "RTF_ONLY":
++            self.rtf_quality_v = nn.ModuleList([nn.Conv2d(128, 1, 1) for _ in range(3)])
++
+ 
+-    def forward(self, rgb, t, d,score1_d, score1_t):       
++    def forward(self, rgb, t, d, score1_d, score1_t, return_aux=False):
+         #Initial Feature Extraction Subnet
+@@ -318,11 +332,61 @@ class Tnet(nn.Module):
+         score_t = self.pool4(score1_t)
+-        
+-        x4_d = (1 - score_d) * x1_1v + score_d * (x1_1d - ((x1_1v + x1_1t)/2))
+-        x3_d = (1 - score_d) * x2_1v + score_d * (x2_1d - ((x2_1v + x2_1t)/2))
+-        x2_d = (1 - score_d) * x3_1v + score_d * (x3_1d - ((x3_1v + x3_1t)/2))
+-
+-
+-        x4_t = (1 - score_t) * x1_1v + score_t * (x1_1t - ((x1_1d + x1_1v)/2))
+-        x3_t = (1 - score_t) * x2_1v + score_t * (x2_1t - ((x2_1d + x2_1v)/2))
+-        x2_t = (1 - score_t) * x3_1v + score_t * (x3_1t - ((x3_1d + x3_1v)/2))
++        modal_scales = (
++            (x1_1v, x1_1d, x1_1t),
++            (x2_1v, x2_1d, x2_1t),
++            (x3_1v, x3_1d, x3_1t),
++        )
++        mixed_d, mixed_t, aux_scales = [], [], []
++        for scale_index, (fv_raw, fd_raw, ft_raw) in enumerate(modal_scales):
++            ccc_aux = None
++            if self.mode in ("CCC_ONLY", "FULL"):
++                fv, fd, ft, ccc_aux = self.ccc_scales[scale_index](
++                    fv_raw, fd_raw, ft_raw, score1_d, score1_t
++                )
++            else:
++                fv, fd, ft = fv_raw, fd_raw, ft_raw
++
++            sd = score_d
++            st = score_t
++            if sd.shape[-2:] != fv.shape[-2:]:
++                sd = F.interpolate(sd, size=fv.shape[-2:], mode="bilinear", align_corners=True)
++                st = F.interpolate(st, size=fv.shape[-2:], mode="bilinear", align_corners=True)
++            x_d_base = (1 - sd) * fv + sd * (fd - ((fv + ft) / 2))
++            x_t_base = (1 - st) * fv + st * (ft - ((fd + fv) / 2))
++
++            rtf_aux = None
++            if self.mode == "FULL":
++                rv, rd, rt = ccc_aux["Rv"], ccc_aux["Rd"], ccc_aux["Rt"]
++                x_d_new, x_t_new, rtf_aux = self.rtf_scales[scale_index](
++                    fv, fd, ft, rv, rd, rt, x_d_base, x_t_base
++                )
++            elif self.mode == "RTF_ONLY":
++                qv = torch.sigmoid(self.rtf_quality_v[scale_index](fv))
++                qd = torch.sigmoid(CCCScale._resize_logit(score1_d, fv.shape[-2:]))
++                qt = torch.sigmoid(CCCScale._resize_logit(score1_t, fv.shape[-2:]))
++                x_d_new, x_t_new, rtf_aux = self.rtf_scales[scale_index](
++                    fv, fd, ft, qv, qd, qt, x_d_base, x_t_base
++                )
++                rtf_aux.update({"Qv": qv, "Qd": qd, "Qt": qt})
++            else:
++                x_d_new, x_t_new = x_d_base, x_t_base
++
++            mixed_d.append(x_d_new)
++            mixed_t.append(x_t_new)
++            if return_aux:
++                aux_scales.append({
++                    "scale_index": scale_index,
++                    "input_shapes": {
++                        "Fv": tuple(fv_raw.shape), "Fd": tuple(fd_raw.shape),
++                        "Ft": tuple(ft_raw.shape),
++                    },
++                    "ccc": ccc_aux,
++                    "rtf": rtf_aux,
++                    "X_d_base": x_d_base,
++                    "X_t_base": x_t_base,
++                    "X_d_new": x_d_new,
++                    "X_t_new": x_t_new,
++                })
++
++        x4_d, x3_d, x2_d = mixed_d
++        x4_t, x3_t, x2_t = mixed_t
+ 
+@@ -389,3 +453,9 @@ class Tnet(nn.Module):
+ 
+-        return edge_pred,x3e_pred, x2e_pred, x1e_pred, x3e_pred_t, x2e_pred_t, x1e_pred_t, x3e_pred_d, x2e_pred_d, x1e_pred_d, x4e_pred_dt, x3e_pred_dt, x2e_pred_dt, x1e_pred_dt
++        outputs = (edge_pred, x3e_pred, x2e_pred, x1e_pred,
++                   x3e_pred_t, x2e_pred_t, x1e_pred_t,
++                   x3e_pred_d, x2e_pred_d, x1e_pred_d,
++                   x4e_pred_dt, x3e_pred_dt, x2e_pred_dt, x1e_pred_dt)
++        if return_aux:
++            return outputs, {"mode": self.mode, "scales": aux_scales}
++        return outputs
+ 

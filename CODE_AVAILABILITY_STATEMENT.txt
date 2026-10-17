@@ -1,0 +1,12 @@
+Code Availability
+
+The RACFNet code is maintained in a private GitHub repository during
+manuscript preparation and is not publicly accessible at present. The
+repository contains the RACFNet-original CCC and RTF modules, a bounded
+integration patch, experiment configurations, evaluation scripts, locked
+result tables, and derived figures. The QSFNet backbone, VDT-2048 dataset,
+trained checkpoints, and full prediction archives are not redistributed.
+After the manuscript authors complete the licensing review and explicitly
+authorize public visibility, the RACFNet-original materials are intended to
+be made available at https://github.com/hylandelisandro-droid/RACFNet. QSFNet and VDT-2048 must be
+obtained from their respective official sources.

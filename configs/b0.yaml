@@ -1,0 +1,12 @@
+model_name: B0
+training_round: Round1
+mode: QSFNet
+epoch: 200
+global_step: 52400
+ccc_enabled: false
+rtf_enabled: false
+checkpoint_filename: B0_Tnet_final.pth
+checkpoint_sha256: a8dea440c8bd391b9f76f397382b6fc442cb188ddf772ae98ec0733f7033b61c
+input_size: 384
+test_split: VDT-2048/Test
+

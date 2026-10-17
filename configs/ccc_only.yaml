@@ -1,0 +1,12 @@
+model_name: CCC_ONLY
+training_round: Round3
+mode: CCC_ONLY
+epoch: 200
+global_step: 52400
+ccc_enabled: true
+rtf_enabled: false
+checkpoint_filename: CCC_ONLY_RACFNet_final.pth
+checkpoint_sha256: 6f06dfeaee68c375d90472b8771ef6dc0783b91e1b9196c21d41d441ae50df83
+input_size: 384
+test_split: VDT-2048/Test
+

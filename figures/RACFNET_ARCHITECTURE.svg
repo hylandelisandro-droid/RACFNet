@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="620" viewBox="0 0 1500 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#34495e"/>
+    </marker>
+    <style>
+      .title{font:700 28px Arial,sans-serif;fill:#17202a}.label{font:600 18px Arial,sans-serif;fill:#17202a}.small{font:15px Arial,sans-serif;fill:#34495e}.box{stroke:#34495e;stroke-width:2;rx:12}.line{stroke:#34495e;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1500" height="620" fill="#ffffff"/>
+  <text x="750" y="42" text-anchor="middle" class="title">RACFNet: Reliability-Aware Cross-Modal Fusion</text>
+
+  <rect x="45" y="105" width="145" height="70" fill="#d6eaf8" class="box"/><text x="118" y="147" text-anchor="middle" class="label">RGB</text>
+  <rect x="45" y="250" width="145" height="70" fill="#d5f5e3" class="box"/><text x="118" y="292" text-anchor="middle" class="label">Depth</text>
+  <rect x="45" y="395" width="145" height="70" fill="#fdebd0" class="box"/><text x="118" y="437" text-anchor="middle" class="label">Thermal</text>
+
+  <rect x="260" y="165" width="235" height="240" fill="#f8f9f9" class="box"/>
+  <text x="378" y="213" text-anchor="middle" class="label">QSFNet feature extraction</text>
+  <text x="378" y="246" text-anchor="middle" class="small">Swin-based modality streams</text>
+  <text x="378" y="276" text-anchor="middle" class="small">Three 128-channel decoder scales</text>
+  <text x="378" y="326" text-anchor="middle" class="small">Fv, Fd, Ft</text>
+  <text x="378" y="356" text-anchor="middle" class="small">at each fusion node</text>
+
+  <rect x="260" y="455" width="235" height="105" fill="#f4ecf7" class="box"/>
+  <text x="378" y="497" text-anchor="middle" class="label">QAnet evidence</text>
+  <text x="378" y="530" text-anchor="middle" class="small">Qd and Qt logits</text>
+
+  <rect x="575" y="150" width="255" height="270" fill="#ebf5fb" class="box"/>
+  <text x="703" y="195" text-anchor="middle" class="label">CCC (per scale)</text>
+  <text x="703" y="235" text-anchor="middle" class="small">quality + consistency + self evidence</text>
+  <text x="703" y="270" text-anchor="middle" class="small">Rv, Rd, Rt reliability evidence</text>
+  <text x="703" y="305" text-anchor="middle" class="small">residual feature calibration</text>
+  <text x="703" y="350" text-anchor="middle" class="small">Fv', Fd', Ft'</text>
+  <text x="703" y="388" text-anchor="middle" class="small">CCC_ONLY bypasses RTF</text>
+
+  <rect x="910" y="150" width="255" height="270" fill="#fef9e7" class="box"/>
+  <text x="1038" y="195" text-anchor="middle" class="label">RTF (per scale)</text>
+  <text x="1038" y="235" text-anchor="middle" class="small">spatial softmax weights</text>
+  <text x="1038" y="270" text-anchor="middle" class="small">Wv, Wd, Wt</text>
+  <text x="1038" y="305" text-anchor="middle" class="small">weighted tri-modal residual</text>
+  <text x="1038" y="350" text-anchor="middle" class="small">added to baseline mixed branches</text>
+  <text x="1038" y="388" text-anchor="middle" class="small">RTF_ONLY uses independent RGB evidence</text>
+
+  <rect x="1245" y="165" width="210" height="240" fill="#f4f6f7" class="box"/>
+  <text x="1350" y="210" text-anchor="middle" class="label">QSFNet fusion path</text>
+  <text x="1350" y="252" text-anchor="middle" class="small">IIA + CBAM + ER</text>
+  <text x="1350" y="287" text-anchor="middle" class="small">multi-scale decoding</text>
+  <text x="1350" y="337" text-anchor="middle" class="label">Saliency output</text>
+  <text x="1350" y="372" text-anchor="middle" class="small">14-output training interface</text>
+
+  <path d="M190 140 L260 215" class="line"/><path d="M190 285 L260 285" class="line"/><path d="M190 430 L260 355" class="line"/>
+  <path d="M190 140 C215 140,220 500,260 505" class="line"/><path d="M190 285 C220 285,225 500,260 505" class="line"/><path d="M190 430 C220 430,225 500,260 505" class="line"/>
+  <path d="M495 285 L575 285" class="line"/><path d="M495 505 C535 505,535 360,575 360" class="line"/>
+  <path d="M830 285 L910 285" class="line"/><path d="M1165 285 L1245 285" class="line"/>
+  <text x="870" y="265" text-anchor="middle" class="small">FULL</text>
+  <path d="M830 390 C875 455,1185 455,1245 390" class="line"/>
+  <text x="1038" y="488" text-anchor="middle" class="small">CCC_ONLY: calibrated features follow the original fusion path</text>
+  <text x="750" y="590" text-anchor="middle" class="small">The QSFNet backbone is obtained separately from the official upstream repository; this package distributes only the RACFNet-original overlay.</text>
+</svg>

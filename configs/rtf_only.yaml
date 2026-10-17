@@ -1,0 +1,12 @@
+model_name: RTF_ONLY
+training_round: Round3
+mode: RTF_ONLY
+epoch: 200
+global_step: 52400
+ccc_enabled: false
+rtf_enabled: true
+checkpoint_filename: RTF_ONLY_RACFNet_final.pth
+checkpoint_sha256: d4924b11999f25e8ff7d86dc9b9677c4f0f7da71cdb22cbac5e87b84ea9f33ea
+input_size: 384
+test_split: VDT-2048/Test
+
